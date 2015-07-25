@@ -33,6 +33,10 @@ import org.wso2.andes.kernel.DurableStoreConnection;
 import org.wso2.andes.kernel.MessageStore;
 import org.wso2.andes.tools.utils.MessageTracer;
 
+import com.google.common.base.Ticker;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+
 /**
  * Implementation of {@link MessageStore} which observes failures such is
  * connection errors. Any {@link MessageStore} implementation specified in
@@ -53,12 +57,21 @@ public class FailureObservingMessageStore implements MessageStore {
      */
     private ScheduledFuture<?> storeHealthDetectingFuture;
 
+    
+    
+    
+    
+    
     /**
      * {@inheritDoc}
      */
     public FailureObservingMessageStore(MessageStore messageStore) {
         this.wrappedInstance = messageStore;
         this.storeHealthDetectingFuture = null;
+        
+        
+        
+        
     }
 
     /**
@@ -144,6 +157,9 @@ public class FailureObservingMessageStore implements MessageStore {
     @Override
     public void storeMessages(List<AndesMessage> messageList) throws AndesException {
         try {
+            
+            
+            
             wrappedInstance.storeMessages(messageList);
         } catch (AndesStoreUnavailableException exception) {
             notifyFailures(exception);
