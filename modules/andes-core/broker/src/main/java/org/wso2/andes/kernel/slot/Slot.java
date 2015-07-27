@@ -75,6 +75,8 @@ public class Slot implements Serializable, Comparable<Slot> {
      */
     private String destinationOfMessagesInSlot;
 
+    
+    public static Slot EMPTY_SLOT = new Slot();
 
     public Slot() {
         isSlotActive = true;

@@ -18,6 +18,8 @@
 
 package org.wso2.andes.kernel.slot;
 
+import org.wso2.andes.kernel.AndesException;
+
 /**
  * This interface is responsible for coordinating with the SlotManagerClusterMode
  */
@@ -29,7 +31,7 @@ public interface SlotCoordinator {
      * @return New Slot
      * @throws ConnectionException
      */
-    public Slot getSlot(String queueName) throws ConnectionException;
+    public Slot getSlot(String queueName) throws ConnectionException , AndesException;
 
     /**
      * Record Slot's last message ID related to a particular queue
@@ -38,7 +40,7 @@ public interface SlotCoordinator {
      * @param endMessageId End message ID of the slot
      * @throws ConnectionException
      */
-    public void updateMessageId(String queueName,long startMessageId, long endMessageId) throws ConnectionException;
+    public void updateMessageId(String queueName,long startMessageId, long endMessageId) throws ConnectionException,  AndesException;
 
     /**
      *  Record safe zone to delete slots by node. This ping comes from nodes as messages are not
@@ -54,18 +56,18 @@ public interface SlotCoordinator {
      * @return Whether the slot deletion is successful or not
      * @throws ConnectionException
      */
-    public boolean deleteSlot(String queueName, Slot slot) throws ConnectionException;
+    public boolean deleteSlot(String queueName, Slot slot) throws ConnectionException, AndesException;
 
     /**
      * Re-assign slot to SlotManagerClusterMode when there are no subscribers
      * @param queueName Name of the queue
      * @throws ConnectionException
      */
-    public void reAssignSlotWhenNoSubscribers(String queueName) throws ConnectionException;
+    public void reAssignSlotWhenNoSubscribers(String queueName) throws ConnectionException , AndesException;
 
     /**
      * Delete all slot associations with a given queue. This is required to handle a queue purge event.
      * @param queueName Name of the queue
      */
-    public void clearAllActiveSlotRelationsToQueue(String queueName) throws ConnectionException;
+    public void clearAllActiveSlotRelationsToQueue(String queueName) throws ConnectionException , AndesException;
 }

@@ -96,6 +96,9 @@ public class ClusterManager implements StoreHealthListener{
 
     }
 
+    
+    public boolean storeOperational;
+    
     /**
      * Handles changes needs to be done in current node when a node joins to the cluster
      */
@@ -203,6 +206,23 @@ public class ClusterManager implements StoreHealthListener{
      */
     private void initClusterMode() throws AndesException {
 
+        
+        FailureObservingStoreManager.registerStoreHealthListener( new StoreHealthListener() {
+            
+            @Override
+            public void storeOperational(HealthAwareStore store) {
+                // TODO Auto-generated method stub
+                
+            }
+            
+            @Override
+            public void storeNonOperational(HealthAwareStore store, Exception ex) {
+                // TODO Auto-generated method stub
+                
+            }
+        });
+        
+        
         // Set the cluster agent from the Andes Context.
         this.clusterAgent = AndesContext.getInstance().getClusterAgent();
 

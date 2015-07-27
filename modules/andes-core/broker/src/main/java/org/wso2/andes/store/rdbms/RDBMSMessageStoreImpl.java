@@ -56,6 +56,7 @@ import org.wso2.carbon.metrics.manager.Timer.Context;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.Weigher;
 
 /**
  * ANSI SQL based message store implementation. Message persistence related methods are implemented
@@ -99,10 +100,18 @@ public class RDBMSMessageStoreImpl implements MessageStore {
 
     public RDBMSMessageStoreImpl() {
         queueMap = new ConcurrentHashMap<String, Integer>();
-        
-        globalCache = CacheBuilder.newBuilder().concurrencyLevel(10).initialCapacity(100000).maximumSize(150000).build();
-        
-        
+
+        globalCache =
+                      CacheBuilder.newBuilder().concurrencyLevel(10).initialCapacity(1073741824)
+                                  .maximumSize(1610612736).weigher(new Weigher<Long, AndesMessage>() {
+
+                                      @Override
+                                      public int weigh(Long l, AndesMessage m) {
+
+                                          return m.getMetadata().getMessageContentLength();
+                                      }
+                                  }).build();
+
     }
 
     /**
