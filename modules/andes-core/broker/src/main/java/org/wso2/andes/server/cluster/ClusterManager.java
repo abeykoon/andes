@@ -97,8 +97,6 @@ public class ClusterManager implements StoreHealthListener{
     }
 
     
-    public boolean storeOperational;
-    
     /**
      * Handles changes needs to be done in current node when a node joins to the cluster
      */

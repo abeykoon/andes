@@ -64,6 +64,8 @@ import com.google.common.cache.Weigher;
  */
 public class RDBMSMessageStoreImpl implements MessageStore {
 
+    private static final int CACHE_SIZE_ONE_GIGA_BYTE = 1073741824;
+
     private static final Logger log = Logger.getLogger(RDBMSMessageStoreImpl.class);
 
     /**
@@ -102,8 +104,8 @@ public class RDBMSMessageStoreImpl implements MessageStore {
         queueMap = new ConcurrentHashMap<String, Integer>();
 
         globalCache =
-                      CacheBuilder.newBuilder().concurrencyLevel(10).initialCapacity(1073741824)
-                                  .maximumSize(1610612736).weigher(new Weigher<Long, AndesMessage>() {
+                      CacheBuilder.newBuilder().concurrencyLevel(10)
+                                  .maximumWeight(CACHE_SIZE_ONE_GIGA_BYTE).weigher(new Weigher<Long, AndesMessage>() {
 
                                       @Override
                                       public int weigh(Long l, AndesMessage m) {
@@ -278,6 +280,10 @@ public class RDBMSMessageStoreImpl implements MessageStore {
         
         for ( Map.Entry<Long, AndesMessage> cachedMessage : fromCache.entrySet()){
             contentList.put(cachedMessage.getKey(), cachedMessage.getValue().getContentChunkList());
+        }
+        
+        if ( messageIDList.isEmpty()){
+            return contentList;
         }
         
         
