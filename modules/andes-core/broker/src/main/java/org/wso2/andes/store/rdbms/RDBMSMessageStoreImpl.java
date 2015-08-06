@@ -25,6 +25,7 @@ import static org.wso2.andes.store.rdbms.RDBMSConstants.MSG_OFFSET;
 import static org.wso2.andes.store.rdbms.RDBMSConstants.PS_INSERT_MESSAGE_PART;
 import static org.wso2.andes.store.rdbms.RDBMSConstants.PS_INSERT_METADATA;
 import static org.wso2.andes.store.rdbms.RDBMSConstants.TASK_RETRIEVING_CONTENT_FOR_MESSAGES;
+
 import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.wso2.andes.configuration.util.ConfigurationProperties;
 import org.wso2.andes.kernel.AndesContextStore;
@@ -52,11 +54,17 @@ import org.wso2.carbon.metrics.manager.Level;
 import org.wso2.carbon.metrics.manager.MetricManager;
 import org.wso2.carbon.metrics.manager.Timer.Context;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.Weigher;
+
 /**
  * ANSI SQL based message store implementation. Message persistence related methods are implemented
  * in this class.
  */
 public class RDBMSMessageStoreImpl implements MessageStore {
+
+    private static final int CACHE_SIZE_ONE_GIGA_BYTE = 1073741824;
 
     private static final Logger log = Logger.getLogger(RDBMSMessageStoreImpl.class);
 
@@ -77,6 +85,10 @@ public class RDBMSMessageStoreImpl implements MessageStore {
      */
     private RDBMSStoreUtils rdbmsStoreUtils;
 
+    
+    private Cache<Long, AndesMessage> globalCache;
+    
+    
     /**
      * Partially created prepared statement to retrieve content of multiple messages using IN operator
      * this will be completed on the fly when the request comes
@@ -90,6 +102,18 @@ public class RDBMSMessageStoreImpl implements MessageStore {
 
     public RDBMSMessageStoreImpl() {
         queueMap = new ConcurrentHashMap<String, Integer>();
+
+        globalCache =
+                      CacheBuilder.newBuilder().concurrencyLevel(10)
+                                  .maximumWeight(CACHE_SIZE_ONE_GIGA_BYTE).weigher(new Weigher<Long, AndesMessage>() {
+
+                                      @Override
+                                      public int weigh(Long l, AndesMessage m) {
+
+                                          return m.getMetadata().getMessageContentLength();
+                                      }
+                                  }).build();
+
     }
 
     /**
@@ -187,6 +211,27 @@ public class RDBMSMessageStoreImpl implements MessageStore {
         Context messageContentRetrievalContext = MetricManager.timer(Level.INFO, MetricsConstants.GET_CONTENT).start();
         Context contextRead = MetricManager.timer(Level.INFO, MetricsConstants.DB_READ).start();
 
+        AndesMessage cachedMessage  = globalCache.getIfPresent(messageId);
+        if ( cachedMessage != null){
+            AndesMessagePart part = cachedMessage.getContentChunkList().get(offsetValue);
+            if ( part != null){
+                return part;
+            }else{
+                
+                for ( AndesMessagePart p : cachedMessage.getContentChunkList()){
+                    if ( p.getOffSet() == offsetValue){
+                        return p;
+                    }
+                }
+                
+            }
+            
+        }
+        
+        
+        
+        
+
         try {
             connection = getConnection();
             preparedStatement = connection.prepareStatement(RDBMSConstants.PS_RETRIEVE_MESSAGE_PART);
@@ -229,7 +274,20 @@ public class RDBMSMessageStoreImpl implements MessageStore {
         Context messageContentRetrievalContext = MetricManager.timer(Level.INFO, MetricsConstants.GET_CONTENT_BATCH).start();
         Context contextRead = MetricManager.timer(Level.INFO, MetricsConstants.DB_READ).start();
 
-        try {
+        Map<Long, AndesMessage> fromCache = globalCache.getAllPresent(messageIDList);
+        
+        messageIDList.removeAll(fromCache.keySet());
+        
+        for ( Map.Entry<Long, AndesMessage> cachedMessage : fromCache.entrySet()){
+            contentList.put(cachedMessage.getKey(), cachedMessage.getValue().getContentChunkList());
+        }
+        
+        if ( messageIDList.isEmpty()){
+            return contentList;
+        }
+        
+        
+         try {
             connection = getConnection();
             preparedStatement = connection.prepareStatement(getSelectContentPreparedStmt(messageIDList.size()));
             for (int mesageIDCounter = 0; mesageIDCounter < messageIDList.size(); mesageIDCounter++) {
@@ -249,6 +307,8 @@ public class RDBMSMessageStoreImpl implements MessageStore {
                 partList.add(msgPart);
             }
 
+            
+            
         } catch (SQLException e) {
             throw rdbmsStoreUtils.convertSQLException("Error occurred while retrieving message content from DB for " +
                     messageIDList.size() + " messages ", e);
@@ -404,6 +464,10 @@ public class RDBMSMessageStoreImpl implements MessageStore {
             storeContentPS = connection.prepareStatement(PS_INSERT_MESSAGE_PART);
 
             for (AndesMessage message : messageList) {
+                
+                globalCache.put(message.getMetadata().getMessageID(), message);
+                
+                
                 addMetadataToBatch(storeMetadataPS,
                         message.getMetadata(),
                         message.getMetadata().getStorageQueueName());
@@ -775,6 +839,13 @@ public class RDBMSMessageStoreImpl implements MessageStore {
         PreparedStatement preparedStatement = null;
         ResultSet results = null;
 
+
+        AndesMessage cached = globalCache.getIfPresent(messageId);
+        if (cached != null){
+            
+            return cached.getMetadata();
+        }
+        
         Context metaRetrievalContext = MetricManager.timer(Level.INFO, MetricsConstants.GET_META_DATA).start();
         Context contextRead = MetricManager.timer(Level.INFO, MetricsConstants.DB_READ).start();
 
@@ -1091,6 +1162,10 @@ public class RDBMSMessageStoreImpl implements MessageStore {
                 .DELETE_MESSAGE_META_DATA_AND_CONTENT).start();
         Context contextWrite = MetricManager.timer(Level.INFO, MetricsConstants.DB_WRITE).start();
 
+        
+        globalCache.invalidateAll(messagesToRemove);
+        
+        
         try {
             int queueID = getCachedQueueID(storageQueueName);
 
@@ -1109,7 +1184,7 @@ public class RDBMSMessageStoreImpl implements MessageStore {
                     //add parameters to delete metadata
                     metadataRemovalPreparedStatement.setLong(1, messageID);
                     metadataRemovalPreparedStatement.addBatch();
-
+                  
                 }
                 metadataRemovalPreparedStatement.executeBatch();
 
@@ -2040,7 +2115,6 @@ public class RDBMSMessageStoreImpl implements MessageStore {
             close(preparedStatementForTopicSelect, RDBMSConstants.TASK_RETRIEVING_RETAINED_TOPICS);
             close(connection, RDBMSConstants.TASK_RETRIEVING_RETAINED_TOPICS);
             contextRead.stop();
-            close(preparedStatementForTopicSelect, "reading all retained topics");
         }
 
         return topicList;

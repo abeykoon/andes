@@ -296,7 +296,7 @@ public class SlotDeliveryWorker extends Thread implements StoreHealthListener{
      * @return a {@link Slot}
      * @throws ConnectionException if connectivity to coordinator is lost.
      */
-    private Slot requestSlot(String storageQueueName) throws ConnectionException {
+    private Slot requestSlot(String storageQueueName) throws ConnectionException, AndesException {
         long startTime = System.currentTimeMillis();
         Slot currentSlot = slotCoordinator.getSlot(storageQueueName);
         long endTime = System.currentTimeMillis();

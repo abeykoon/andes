@@ -19,6 +19,7 @@
 package org.wso2.andes.kernel.slot;
 
 import org.apache.thrift.TException;
+import org.wso2.andes.kernel.AndesException;
 
 import java.lang.Exception;
 import java.lang.String;

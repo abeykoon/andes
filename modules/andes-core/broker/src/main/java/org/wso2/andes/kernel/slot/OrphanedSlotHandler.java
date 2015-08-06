@@ -132,7 +132,7 @@ public class OrphanedSlotHandler implements SubscriptionListener {
                 if (log.isDebugEnabled()) {
                     log.debug("Re-assigned slots for queue: " + queueName);
                 }
-            } catch (ConnectionException e) {
+            } catch (ConnectionException | AndesException e) {
                 log.error("Error occurred while re-assigning the slot to slot manager", e);
             }
 

@@ -75,11 +75,13 @@ public class Slot implements Serializable, Comparable<Slot> {
      */
     private String destinationOfMessagesInSlot;
 
+    
+    public static Slot EMPTY_SLOT = new Slot();
 
     public Slot() {
         isSlotActive = true;
         isAnOverlappingSlot = false;
-        this.slotStates = new ArrayList<SlotState>();
+        this.slotStates = new ArrayList<>();
         addState(SlotState.CREATED);
     }
 

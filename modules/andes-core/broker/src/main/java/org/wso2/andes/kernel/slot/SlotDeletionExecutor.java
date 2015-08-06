@@ -19,8 +19,10 @@
 package org.wso2.andes.kernel.slot;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.andes.kernel.AndesException;
 import org.wso2.andes.kernel.MessagingEngine;
 
 import java.util.concurrent.ExecutorService;
@@ -124,7 +126,7 @@ public class SlotDeletionExecutor {
             try {
                 deleteSuccess = MessagingEngine.getInstance().getSlotCoordinator().deleteSlot
                         (slot.getStorageQueueName(), slot);
-            } catch (ConnectionException e) {
+            } catch (ConnectionException | AndesException e) {
                 log.error("Error while trying to delete the slot " + slot + " Thrift connection failed. " +
                         "Rescheduling delete.");
 
