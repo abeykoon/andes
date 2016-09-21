@@ -31,6 +31,7 @@ import org.wso2.andes.kernel.disruptor.inbound.InboundDeleteMessagesEvent;
 import org.wso2.andes.kernel.disruptor.inbound.InboundEventManager;
 import org.wso2.andes.kernel.disruptor.inbound.InboundExchangeEvent;
 import org.wso2.andes.kernel.disruptor.inbound.InboundKernelOpsEvent;
+import org.wso2.andes.kernel.disruptor.inbound.InboundMessageRecoverEvent;
 import org.wso2.andes.kernel.disruptor.inbound.InboundQueueEvent;
 import org.wso2.andes.kernel.disruptor.inbound.InboundSubscriptionEvent;
 import org.wso2.andes.kernel.disruptor.inbound.InboundTransactionEvent;
@@ -144,13 +145,14 @@ public class Andes {
     /**
      * Recover messages for the subscriber. Re-schedule sent but un-ackenowledged
      * messages back
+     *
      * @param channelID ID of the channel recover request is received
-     * @throws AndesException
+     * @throws AndesException on an error executing message recovery
      */
     public void recoverMessage(UUID channelID) throws AndesException {
-        AndesSubscription subscription  = AndesContext.getInstance().
-                getAndesSubscriptionManager().getSubscriptionByProtocolChannel(channelID);
-        subscription.recoverMessages();
+        InboundMessageRecoverEvent inboundMessageRecoverEvent = new InboundMessageRecoverEvent(channelID);
+        inboundMessageRecoverEvent.prepareForMessageRecovery(subscriptionManager);
+        inboundEventManager.publishStateEvent(inboundMessageRecoverEvent);
     }
 
     /**
