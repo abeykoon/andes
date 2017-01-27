@@ -736,6 +736,14 @@ public enum AndesConfiguration implements ConfigurationProperty {
     RECOVERY_NETWORK_PARTITIONS_MINIMUM_CLUSTER_SIZE("recovery/networkPartitionsDetection/minimumClusterSize",
             "1", Integer.class),
 
+
+    HA_MAX_SUBSCRIBERS_PER_NODE("highAvailability/maxNoOfSubscribers", "100", Integer.class),
+
+    HA_MAX_NUMBER_OF_SUBSCRIPTIONS_PER_QUEUE("highAvailability/maxNoOfSubscriptionsPerQueue", "10", Integer.class),
+
+    HA_QUEUE_DISTRIBUTION_STRATEGY("highAvailability/queueDistributionStrategy", "AllToOne", String.class),
+
+
     /**
      * Specifies the deployment mode for the broker node (and cluster). Possible values {default, standalone}.
      *
@@ -749,6 +757,8 @@ public enum AndesConfiguration implements ConfigurationProperty {
      * provide HA or clustering.
      */
     DEPLOYMENT_MODE("deployment/mode","default", String.class);
+
+
 
     /**
      * Meta data about configuration.

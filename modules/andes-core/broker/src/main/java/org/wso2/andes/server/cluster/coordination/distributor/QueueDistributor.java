@@ -16,6 +16,8 @@
 package org.wso2.andes.server.cluster.coordination.distributor;
 
 
+import org.wso2.andes.configuration.AndesConfigurationManager;
+import org.wso2.andes.configuration.enums.AndesConfiguration;
 import org.wso2.andes.kernel.AndesContextStore;
 import org.wso2.andes.kernel.AndesException;
 
@@ -26,7 +28,11 @@ public class QueueDistributor {
 
     public QueueDistributor(AndesContextStore contextStore) {
         this.contextStore = contextStore;
-        this.queueDistributeStategy = new RoundRobinQueueDistributor(contextStore);
+        if ("AllToOne".equals(AndesConfigurationManager.readValue(AndesConfiguration.HA_QUEUE_DISTRIBUTION_STRATEGY))) {
+            this.queueDistributeStategy = new AllToOneQueueDistributor(contextStore);
+        } else {
+            this.queueDistributeStategy = new RoundRobinQueueDistributor(contextStore);
+        }
     }
 
     public synchronized NodeInfo getMasterNode(String queueName, String protocol) throws AndesException {
@@ -38,11 +44,7 @@ public class QueueDistributor {
             nodeToAssignQueue = queueDistributeStategy.getMasterNode(queueName);
             //store assignment in persistent store
             contextStore.assignNodeForQueue(queueName, nodeToAssignQueue.getNodeID());
-//            AndesContext.getInstance().getStorageQueueRegistry().
-//                    getStorageQueue(queueName).setMasterNode(node.getNodeID());
-//            nodeToAssignQueue = node.getHostName() + ":" + node.getAmqpPort();
         }
-        //return hostname:port(AMQP) of assigned node to connect
         return nodeToAssignQueue;
     }
 }

@@ -40,9 +40,9 @@ import javax.xml.rpc.ServiceException;
  * Need this adaptor class to conform to JMS spec and throw IllegalStateException
  * from createDurableSubscriber, unsubscribe, createTopic & createTemporaryTopic
  */
-public class AMQQueueSessionAdaptor implements QueueSession, AMQSessionAdapter {
+public class AMQQueueSessionAdaptor extends AMQSessionAdapter implements QueueSession {
     //holds a session for delegation
-    protected AMQSession _session;
+//    protected AMQSession _session;
 
     /**
      * Construct an adaptor with a session to wrap
@@ -194,11 +194,11 @@ public class AMQQueueSessionAdaptor implements QueueSession, AMQSessionAdapter {
         throw new IllegalStateException("Cannot call unsubscribe from QueueSession");
     }
 
-    public AMQSession getSession() {
+    /*public AMQSession getSession() {
         return _session;
-    }
+    }*/
 
-    private void checkValidDestination(Destination destination) throws InvalidDestinationException {
+    /*private void checkValidDestination(Destination destination) throws InvalidDestinationException {
         if (destination == null) {
             throw new javax.jms.InvalidDestinationException("Invalid Queue");
         } else {
@@ -237,9 +237,9 @@ public class AMQQueueSessionAdaptor implements QueueSession, AMQSessionAdapter {
                 throw new InvalidDestinationException(e.getMessage());
             }
         }
-    }
+    }*/
 
-    private String getNodeForDestination(Destination destination) throws ServiceException, MalformedURLException,
+    /*private String getNodeForDestination(Destination destination) throws ServiceException, MalformedURLException,
             RemoteException, JMSException {
         String host = this._session._connection.getActiveBrokerDetails().getHost();
         String port = "9443";
@@ -257,5 +257,5 @@ public class AMQQueueSessionAdaptor implements QueueSession, AMQSessionAdapter {
 
         String response = (String) call.invoke(new Object[]{((Queue) destination).getQueueName(), "amqp"});
         return response;
-    }
+    }*/
 }

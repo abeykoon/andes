@@ -44,9 +44,9 @@ import javax.jms.TopicPublisher;
 import javax.jms.TopicSession;
 import javax.jms.TopicSubscriber;
 
-public class AMQTopicSessionAdaptor implements TopicSession, AMQSessionAdapter
+public class AMQTopicSessionAdaptor extends  AMQSessionAdapter implements TopicSession
 {
-    protected final AMQSession _session;
+//    protected final AMQSession _session;
 
     public AMQTopicSessionAdaptor(Session session)
     {
@@ -60,6 +60,7 @@ public class AMQTopicSessionAdaptor implements TopicSession, AMQSessionAdapter
 
     public TopicSubscriber createSubscriber(Topic topic) throws JMSException
     {
+        checkValidDestination(topic);
         return _session.createSubscriber(topic);
     }
 
@@ -80,6 +81,7 @@ public class AMQTopicSessionAdaptor implements TopicSession, AMQSessionAdapter
 
     public TopicPublisher createPublisher(Topic topic) throws JMSException
     {
+        checkValidDestination(topic);
         return _session.createPublisher(topic);
     }
 
@@ -219,8 +221,8 @@ public class AMQTopicSessionAdaptor implements TopicSession, AMQSessionAdapter
         throw new IllegalStateException("Cannot call createTemporaryQueue from TopicSession");
     }
 
-    public AMQSession getSession()
+    /*public AMQSession getSession()
     {
         return _session;
-    }
+    }*/
 }
